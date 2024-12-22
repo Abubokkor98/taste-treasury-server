@@ -80,6 +80,13 @@ async function run() {
       console.log(updatePurchaseCount);
       res.send(result);
     });
+        // get all orders posted by a specific user
+        app.get("/orders/:email", async (req, res) => {
+            const email = req.params.email;
+            const query = { buyerEmail: email };
+            const result = await orderCollection.find(query).toArray();
+            res.send(result);
+          });
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });

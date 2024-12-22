@@ -36,6 +36,7 @@ async function run() {
   try {
     // starting from here
     const foodCollection = client.db("A11-DB").collection("foods");
+    const orderCollection = client.db("A11-DB").collection("orders");
 
     // save a food in db
     app.post("/add-food", async (req, res) => {
@@ -60,6 +61,23 @@ async function run() {
       const email = req.params.email;
       const query = { "addedBy.email": email };
       const result = await foodCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    /********
+     * orders db from here
+     ********/
+    // save a order in db
+    app.post("/add-order", async (req, res) => {
+      const newOrder = req.body;
+      const result = await orderCollection.insertOne(newOrder);
+      // 2. Increase bid count in jobs collection
+      const filter = { _id: new ObjectId(newOrder.foodId) };
+      const update = {
+        $inc: { purchaseCount: 1 },
+      };
+      const updatePurchaseCount = await foodCollection.updateOne(filter, update);
+      console.log(updatePurchaseCount);
       res.send(result);
     });
 

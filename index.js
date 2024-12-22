@@ -20,7 +20,7 @@ app.use(
 app.use(cookieParser());
 
 // mongo db
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.4nvaj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -46,6 +46,13 @@ async function run() {
     // get all foods from db
     app.get("/foods", async (req, res) => {
       const result = await foodCollection.find().toArray();
+      res.send(result);
+    });
+    // get a single food by id from db
+    app.get("/food/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await foodCollection.findOne(query);
       res.send(result);
     });
     // get all foods posted by a specific user

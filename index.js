@@ -12,7 +12,7 @@ const port = process.env.PORT || 5000;
 app.use(express.json());
 app.use(
   cors({
-    origin: ["http://localhost:5173"], //replace with client address
+    origin: ["http://localhost:5173", "https://assignment-11-7312b.web.app"], //replace with client address
     credentials: true,
   })
 );
@@ -76,17 +76,27 @@ async function run() {
       const update = {
         $inc: { purchaseCount: 1 },
       };
-      const updatePurchaseCount = await foodCollection.updateOne(filter, update);
+      const updatePurchaseCount = await foodCollection.updateOne(
+        filter,
+        update
+      );
       console.log(updatePurchaseCount);
       res.send(result);
     });
-        // get all orders posted by a specific user
-        app.get("/orders/:email", async (req, res) => {
-            const email = req.params.email;
-            const query = { buyerEmail: email };
-            const result = await orderCollection.find(query).toArray();
-            res.send(result);
-          });
+    // get all orders posted by a specific user
+    app.get("/orders/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { buyerEmail: email };
+      const result = await orderCollection.find(query).toArray();
+      res.send(result);
+    });
+    // delete a order from db
+    app.delete("/order/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await orderCollection.deleteOne(query);
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });

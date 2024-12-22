@@ -48,6 +48,13 @@ async function run() {
       const result = await foodCollection.find().toArray();
       res.send(result);
     });
+    // get all foods posted by a specific user
+    app.get("/foods/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { "addedBy.email": email };
+      const result = await foodCollection.find(query).toArray();
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });

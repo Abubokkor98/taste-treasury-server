@@ -64,6 +64,30 @@ async function run() {
       res.send(result);
     });
 
+    // update a food
+    app.put("/food/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updatedFood = req.body;
+      const food = {
+        $set: {
+          foodName: updatedFood.foodName,
+          foodImage: updatedFood.foodImage,
+          foodCategory: updatedFood.foodCategory,
+          quantity: updatedFood.quantity,
+          price: updatedFood.price,
+          "addedBy.email": updatedFood.addedBy.email,
+          "addedBy.name": updatedFood.addedBy.name,
+          foodOrigin: updatedFood.foodOrigin,
+          description: updatedFood.description,
+          purchaseCount: updatedFood.purchaseCount,
+        },
+      };
+      const result = await foodCollection.updateOne(filter, food, options);
+      res.send(result);
+    });
+
     /********
      * orders db from here
      ********/
@@ -80,7 +104,6 @@ async function run() {
         filter,
         update
       );
-      console.log(updatePurchaseCount);
       res.send(result);
     });
     // get all orders posted by a specific user

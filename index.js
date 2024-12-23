@@ -12,7 +12,7 @@ const port = process.env.PORT || 5000;
 app.use(express.json());
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://assignment-11-7312b.web.app"], //replace with client address
+    origin: ["http://localhost:5173", "https://assignment-11-7312b.web.app"],
     credentials: true,
   })
 );
@@ -45,7 +45,23 @@ async function run() {
       const token = jwt.sign(email, process.env.SECRET_KEY, {
         expiresIn: "5h",
       });
-      res.send(token);
+      res
+        .cookie("token", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+        })
+        .send({ success: true });
+    });
+    // logout || clear cookie from browser
+    app.get("/logout", async (req, res) => {
+      res
+        .clearCookie("token", {
+          maxAge: 0,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+        })
+        .send({ success: true });
     });
 
     // save a food in db

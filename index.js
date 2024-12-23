@@ -5,17 +5,16 @@ const cookieParser = require("cookie-parser");
 require("dotenv").config();
 
 const app = express();
-
 const port = process.env.PORT || 5000;
 
+const corsOptions = {
+  origin: ["http://localhost:5173", "https://assignment-11-7312b.web.app"],
+  credentials: true,
+};
+
 //middleware
+app.use(cors(corsOptions));
 app.use(express.json());
-app.use(
-  cors({
-    origin: ["http://localhost:5173", "https://assignment-11-7312b.web.app"],
-    credentials: true,
-  })
-);
 // cookie parser middleware
 app.use(cookieParser());
 
@@ -31,6 +30,20 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   },
 });
+
+// verifyToken
+const verifyToken = (req, res, next) => {
+  const token = req.cookies?.token;
+  if (!token) return res.status(401).send({ message: "unauthorized access" });
+  jwt.verify(token, process.env.SECRET_KEY, (err, decoded) => {
+    if (err) {
+      return res.status(401).send({ message: "unauthorized access" });
+    }
+    req.user = decoded;
+  });
+
+  next();
+};
 
 async function run() {
   try {
@@ -92,8 +105,13 @@ async function run() {
       res.send(result);
     });
     // get all foods posted by a specific user
-    app.get("/foods/:email", async (req, res) => {
+    app.get("/foods/:email", verifyToken, async (req, res) => {
+      const decodedEmail = req.user?.email;
       const email = req.params.email;
+      // verify user
+      if (decodedEmail !== email)
+        return res.status(401).send({ message: "unauthorized access" });
+
       const query = { "addedBy.email": email };
       const result = await foodCollection.find(query).toArray();
       res.send(result);
@@ -127,21 +145,6 @@ async function run() {
      * orders db from here
      ********/
     // save a order in db
-
-    /**
- * app.post('/buyer',async(req,res) =>{
-          const data = req.body
-          const result = await buyerCollection.insertOne(data)
-
-          const filter = {_id:new ObjectId(data.sellerId)}
-          const update={
-            $inc:{purchase:data.foodquantity},
-          }
-          const updateCollection= await dataCollection.updateOne(filter,update)
-          
-          res.send(result)
-        })
- */
     app.post("/add-order", async (req, res) => {
       const newOrder = req.body;
       const result = await orderCollection.insertOne(newOrder);
@@ -161,14 +164,18 @@ async function run() {
       res.send(result);
     });
     // get all orders posted by a specific user
-    app.get("/orders/:email", async (req, res) => {
+    app.get("/orders/:email", verifyToken, async (req, res) => {
       const email = req.params.email;
+      const decodedEmail = req.user?.email;
+      // verify user
+      if (decodedEmail !== email)
+        return res.status(401).send({ message: "unauthorized access" });
       const query = { buyerEmail: email };
       const result = await orderCollection.find(query).toArray();
       res.send(result);
     });
     // delete a order from db
-    app.delete("/order/:id", async (req, res) => {
+    app.delete("/order/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await orderCollection.deleteOne(query);

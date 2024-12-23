@@ -38,12 +38,23 @@ async function run() {
     const foodCollection = client.db("A11-DB").collection("foods");
     const orderCollection = client.db("A11-DB").collection("orders");
 
+    // generate jwt
+    app.post("/jwt", async (req, res) => {
+      const email = req.body;
+      // create token
+      const token = jwt.sign(email, process.env.SECRET_KEY, {
+        expiresIn: "5h",
+      });
+      res.send(token);
+    });
+
     // save a food in db
     app.post("/add-food", async (req, res) => {
       const newFood = req.body;
       const result = await foodCollection.insertOne(newFood);
       res.send(result);
     });
+
     // get all foods from db
     app.get("/foods", async (req, res) => {
       const search = req.query.search;
@@ -100,13 +111,32 @@ async function run() {
      * orders db from here
      ********/
     // save a order in db
+
+    /**
+ * app.post('/buyer',async(req,res) =>{
+          const data = req.body
+          const result = await buyerCollection.insertOne(data)
+
+          const filter = {_id:new ObjectId(data.sellerId)}
+          const update={
+            $inc:{purchase:data.foodquantity},
+          }
+          const updateCollection= await dataCollection.updateOne(filter,update)
+          
+          res.send(result)
+        })
+ */
     app.post("/add-order", async (req, res) => {
       const newOrder = req.body;
       const result = await orderCollection.insertOne(newOrder);
       // 2. Increase purchase count in jobs collection
       const filter = { _id: new ObjectId(newOrder.foodId) };
       const update = {
-        $inc: { purchaseCount: 1 },
+        $inc: {
+          purchaseCount: 1,
+          // purchaseCount: newOrder.orderQuantity,
+          // quantity: newOrder.orderQuantity,
+        },
       };
       const updatePurchaseCount = await foodCollection.updateOne(
         filter,

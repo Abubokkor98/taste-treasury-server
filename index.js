@@ -46,7 +46,15 @@ async function run() {
     });
     // get all foods from db
     app.get("/foods", async (req, res) => {
-      const result = await foodCollection.find().toArray();
+      const search = req.query.search;
+      console.log(search);
+      let query = {
+        foodName: {
+          $regex: search,
+          $options: "i",
+        },
+      };
+      const result = await foodCollection.find(query).toArray();
       res.send(result);
     });
     // get a single food by id from db

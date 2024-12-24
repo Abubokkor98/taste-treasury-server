@@ -87,7 +87,7 @@ async function run() {
     // get all foods from db
     app.get("/foods", async (req, res) => {
       const search = req.query.search;
-      console.log(search);
+      // console.log(search);
       let query = {
         foodName: {
           $regex: search,
@@ -95,6 +95,15 @@ async function run() {
         },
       };
       const result = await foodCollection.find(query).toArray();
+      res.send(result);
+    });
+    // get top selling foods
+    app.get("/top-foods", async (req, res) => {
+      const result = await foodCollection
+        .find({})
+        .sort({ purchaseCount: -1 })
+        .limit(6)
+        .toArray();
       res.send(result);
     });
     // get a single food by id from db
@@ -152,9 +161,9 @@ async function run() {
       const filter = { _id: new ObjectId(newOrder.foodId) };
       const update = {
         $inc: {
-          purchaseCount: 1,
-          // purchaseCount: newOrder.orderQuantity,
-          // quantity: newOrder.orderQuantity,
+          // purchaseCount: 1,
+          purchaseCount: newOrder.orderQuantity,
+          quantity: -newOrder.orderQuantity,
         },
       };
       const updatePurchaseCount = await foodCollection.updateOne(

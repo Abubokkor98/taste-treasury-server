@@ -88,14 +88,22 @@ async function run() {
     app.get("/foods", async (req, res) => {
       const search = req.query.search;
       // console.log(search);
+      // for pagination
+      const page = parseInt(req.query.page);
+      const size = parseInt(req.query.size);
       let query = {
         foodName: {
           $regex: search,
           $options: "i",
         },
       };
-      const result = await foodCollection.find(query).toArray();
+      const result = await foodCollection.find(query).skip(page*size).limit(size).toArray();
       res.send(result);
+    });
+    // total number of product
+    app.get("/foodsCount", async (req, res) => {
+      const count = await foodCollection.estimatedDocumentCount();
+      res.send({ count });
     });
     // get top selling foods
     app.get("/top-foods", async (req, res) => {

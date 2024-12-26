@@ -61,7 +61,7 @@ async function run() {
       const email = req.body;
       // create token
       const token = jwt.sign(email, process.env.SECRET_KEY, {
-        expiresIn: "5h",
+        expiresIn: "7d",
       });
       res
         .cookie("token", token, {

@@ -3,9 +3,10 @@ const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
-
 const app = express();
 const port = process.env.PORT || 5000;
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+
 
 // const corsOptions = {
 //   origin: ["http://localhost:5173", "https://assignment-11-7312b.web.app"],
@@ -23,8 +24,26 @@ app.use(express.json());
 // cookie parser middleware
 app.use(cookieParser());
 
+
+// verifyToken
+const verifyToken = (req, res, next) => {
+  const token = req.cookies?.token;
+  if (!token) {
+    return res.status(401).send({ message: "unauthorized access" });
+  }
+  jwt.verify(token, process.env.SECRET_KEY, (err, decoded) => {
+    if (err) {
+      return res.status(401).send({ message: "unauthorized access" });
+    }
+    req.user = decoded;
+  next();
+  });
+
+};
+
+
 // mongo db
-const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.4nvaj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -36,19 +55,6 @@ const client = new MongoClient(uri, {
   },
 });
 
-// verifyToken
-const verifyToken = (req, res, next) => {
-  const token = req.cookies?.token;
-  if (!token) return res.status(401).send({ message: "unauthorized access" });
-  jwt.verify(token, process.env.SECRET_KEY, (err, decoded) => {
-    if (err) {
-      return res.status(401).send({ message: "unauthorized access" });
-    }
-    req.user = decoded;
-  });
-
-  next();
-};
 
 async function run() {
   try {
@@ -75,6 +81,7 @@ async function run() {
     app.get("/logout", async (req, res) => {
       res
         .clearCookie("token", {
+          httpOnly: true,
           maxAge: 0,
           secure: process.env.NODE_ENV === "production",
           sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",

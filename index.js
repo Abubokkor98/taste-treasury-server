@@ -15,7 +15,7 @@ const port = process.env.PORT || 5000;
 //middleware
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://assignment-11-7312b.web.app"],
+    origin: ["http://localhost:5173", "https://assignment-11-7312b.web.app", "https://taste-treasury.netlify.app"],
     credentials: true,
   })
 );

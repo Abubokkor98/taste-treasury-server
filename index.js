@@ -1,19 +1,24 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
-require("dotenv").config();
 
 const app = express();
 const port = process.env.PORT || 5000;
 
-const corsOptions = {
-  origin: ["http://localhost:5173", "https://assignment-11-7312b.web.app"],
-  credentials: true,
-};
+// const corsOptions = {
+//   origin: ["http://localhost:5173", "https://assignment-11-7312b.web.app"],
+//   credentials: true,
+// };
 
 //middleware
-app.use(cors(corsOptions));
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "https://assignment-11-7312b.web.app"],
+    credentials: true,
+  })
+);
 app.use(express.json());
 // cookie parser middleware
 app.use(cookieParser());
@@ -78,7 +83,7 @@ async function run() {
     });
 
     // save a food in db
-    app.post("/add-food", async (req, res) => {
+    app.post("/add-food", verifyToken, async (req, res) => {
       const newFood = req.body;
       const result = await foodCollection.insertOne(newFood);
       res.send(result);
@@ -87,24 +92,32 @@ async function run() {
     // get all foods from db
     app.get("/foods", async (req, res) => {
       const search = req.query.search;
-      // console.log(search);
-      // for pagination
       const page = parseInt(req.query.page);
       const size = parseInt(req.query.size);
-      let query = {
-        foodName: {
-          $regex: search,
-          $options: "i",
-        },
-      };
-      const result = await foodCollection.find(query).skip(page*size).limit(size).toArray();
-      res.send(result);
+
+      const query = search
+        ? {
+            foodName: {
+              $regex: search,
+              $options: "i",
+            },
+          }
+        : {};
+
+      const totalCount = await foodCollection.countDocuments(query);
+
+      const result = await foodCollection
+        .find(query)
+        .skip(page * size)
+        .limit(size)
+        .toArray();
+
+      res.send({
+        totalCount,
+        result,
+      });
     });
-    // total number of product
-    app.get("/foodsCount", async (req, res) => {
-      const count = await foodCollection.estimatedDocumentCount();
-      res.send({ count });
-    });
+
     // get top selling foods
     app.get("/top-foods", async (req, res) => {
       const result = await foodCollection
@@ -135,7 +148,7 @@ async function run() {
     });
 
     // update a food
-    app.put("/food/:id", async (req, res) => {
+    app.put("/food/:id", verifyToken, async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const options = { upsert: true };
@@ -157,20 +170,27 @@ async function run() {
       const result = await foodCollection.updateOne(filter, food, options);
       res.send(result);
     });
+    // delete a food from db
+    app.delete("/food/:id", verifyToken, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await foodCollection.deleteOne(query);
+      res.send(result);
+    });
 
     /********
      * orders db from here
      ********/
     // save a order in db
-    app.post("/add-order", async (req, res) => {
+    app.post("/add-order", verifyToken, async (req, res) => {
       const newOrder = req.body;
       const result = await orderCollection.insertOne(newOrder);
       // 2. Increase purchase count in jobs collection
       const filter = { _id: new ObjectId(newOrder.foodId) };
       const update = {
         $inc: {
-          // purchaseCount: 1,
-          purchaseCount: newOrder.orderQuantity,
+          purchaseCount: 1,
+          // purchaseCount: newOrder.orderQuantity,
           quantity: -newOrder.orderQuantity,
         },
       };

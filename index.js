@@ -130,7 +130,7 @@ async function run() {
       const result = await foodCollection
         .find({})
         .sort({ purchaseCount: -1 })
-        .limit(6)
+        .limit(8)
         .toArray();
       res.send(result);
     });

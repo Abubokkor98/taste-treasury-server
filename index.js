@@ -192,7 +192,7 @@ async function run() {
     app.post("/add-order", verifyToken, async (req, res) => {
       const newOrder = req.body;
       const result = await orderCollection.insertOne(newOrder);
-      // 2. Increase purchase count in jobs collection
+      // 2. Increase purchase count in food collection
       const filter = { _id: new ObjectId(newOrder.foodId) };
       const update = {
         $inc: {
